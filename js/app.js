@@ -87,7 +87,6 @@ async function initMap() {
     await mapView.when();
     console.log('[OT Atlas] MapView ready!');
 
-    // Finish progress bar
     if (window._progressInterval) clearInterval(window._progressInterval);
     if (window._progressBar) window._progressBar.style.width = '100%';
 
@@ -105,33 +104,53 @@ async function initMap() {
   }
 }
 
+// --- HELPERS ---
+// Determine if we're in "overview" mode (all books, no specific filter)
+function isOverview() {
+  return activeBook === 'all' && activeCategory === 'all' && !selectedChapter;
+}
+
+// Get the ordered cities for a specific book, sorted by event order
+function getBookOrderedCities(bookId) {
+  const bookCities = cities.filter(c => c.books.includes(bookId));
+  // Sort by the minimum event order in this book
+  return bookCities.sort((a, b) => {
+    const aOrder = Math.min(...a.events.filter(e => e.book === bookId).map(e => e.order));
+    const bOrder = Math.min(...b.events.filter(e => e.book === bookId).map(e => e.order));
+    return aOrder - bOrder;
+  });
+}
+
+// Get order number for a city within a book
+function getCityOrderInBook(city, bookId) {
+  const ordered = getBookOrderedCities(bookId);
+  return ordered.findIndex(c => c.id === city.id) + 1;
+}
+
 // --- GENERATE BOOK CHIPS ---
 function generateBookChips() {
   const container = document.getElementById('bookChips');
   container.innerHTML = '';
 
-  // "All" chip
   const allChip = document.createElement('button');
-  allChip.className = 'book-chip active';
+  allChip.className = 'book-chip' + (activeBook === 'all' ? ' active' : '');
   allChip.setAttribute('data-book', 'all');
   allChip.innerHTML = `<span class="chip-dot" style="background:var(--gold)"></span><span class="chip-label">${t('allJourneys')}</span>`;
   container.appendChild(allChip);
 
-  // Book chips (filtered by category)
   const filteredBooks = activeCategory === 'all'
     ? books
     : books.filter(b => b.category === activeCategory);
 
   filteredBooks.forEach(book => {
     const chip = document.createElement('button');
-    chip.className = 'book-chip';
+    chip.className = 'book-chip' + (activeBook === book.id ? ' active' : '');
     chip.setAttribute('data-book', book.id);
     const tr = bookTranslations[lang]?.[book.id] || bookTranslations.en[book.id];
     chip.innerHTML = `<span class="chip-dot" style="background:${book.hexColor}"></span><span class="chip-label">${tr.shortName}</span>`;
     container.appendChild(chip);
   });
 
-  // Chip click handlers
   container.querySelectorAll('.book-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       container.querySelectorAll('.book-chip').forEach(c => c.classList.remove('active'));
@@ -141,10 +160,14 @@ function generateBookChips() {
       selectedChapter = null;
       closeBottomSheet();
       refresh();
+
       if (activeBook !== 'all') {
         zoomToBook(activeBook);
+        // Auto-open scripture panel linked to this book
+        openScripturePanelForContext();
       } else {
         mapView.goTo({ center: [37, 32], zoom: 5 }, { duration: 800 });
+        document.getElementById('scripturePanel').classList.remove('open');
       }
     });
   });
@@ -167,6 +190,8 @@ function refresh() {
 
 function drawRoutes() {
   routesLayer.removeAll();
+  const overview = isOverview();
+
   routes.forEach(route => {
     if (activeBook !== 'all' && route.book !== activeBook) return;
     if (activeCategory !== 'all') {
@@ -177,25 +202,28 @@ function drawRoutes() {
     if (!book) return;
     const [r, g, b] = book.color;
 
-    // Outbound
+    // Lower opacity in overview mode to reduce clutter
+    const alphaOut = overview ? 0.25 : 0.8;
+    const alphaRet = overview ? 0.15 : 0.5;
+    const widthOut = overview ? 2 : 3;
+
     if (route.outbound && route.outbound.length > 1) {
       const paths = route.outbound.map(p => [p[0], p[1]]);
       routesLayer.add(new Graphic({
         geometry: new Polyline({ paths: [paths], spatialReference: { wkid: 4326 } }),
         symbol: new SimpleLineSymbol({
-          color: [r, g, b, 0.8], width: 3, style: "solid",
+          color: [r, g, b, alphaOut], width: widthOut, style: "solid",
           cap: "round", join: "round"
         })
       }));
     }
 
-    // Return path
     if (route.returnPath && route.returnPath.length > 1) {
       const paths = route.returnPath.map(p => [p[0], p[1]]);
       routesLayer.add(new Graphic({
         geometry: new Polyline({ paths: [paths], spatialReference: { wkid: 4326 } }),
         symbol: new SimpleLineSymbol({
-          color: [r, g, b, 0.5], width: 2, style: "dash",
+          color: [r, g, b, alphaRet], width: 2, style: "dash",
           cap: "round", join: "round"
         })
       }));
@@ -207,30 +235,68 @@ function drawCities() {
   citiesLayer.removeAll();
   labelsLayer.removeAll();
   const filtered = getFilteredCities();
+  const overview = isOverview();
+  const showNumbers = activeBook !== 'all';
 
   filtered.forEach(city => {
     const bookColor = getCityColor(city);
-    const size = city.significance === 'major' ? 14 : city.significance === 'moderate' ? 10 : 7;
+    const baseSize = city.significance === 'major' ? 14 : city.significance === 'moderate' ? 10 : 7;
+    // Lower opacity in overview mode
+    const markerAlpha = overview ? 0.35 : 0.9;
+    const labelAlpha = overview ? 0.45 : 0.9;
+    const size = showNumbers ? Math.max(baseSize, 16) : baseSize;
 
-    citiesLayer.add(new Graphic({
-      geometry: new Point({ longitude: city.lng, latitude: city.lat, spatialReference: { wkid: 4326 } }),
-      symbol: new SimpleMarkerSymbol({
-        color: [...bookColor, 0.9],
-        size: size,
-        outline: { color: [255, 255, 255, 0.6], width: 1 },
-        style: "circle"
-      }),
-      attributes: { cityId: city.id, name: city.biblicalName, significance: city.significance }
-    }));
+    // Numbered markers when a specific book is selected
+    if (showNumbers) {
+      const order = getCityOrderInBook(city, activeBook);
+
+      // Circle background
+      citiesLayer.add(new Graphic({
+        geometry: new Point({ longitude: city.lng, latitude: city.lat, spatialReference: { wkid: 4326 } }),
+        symbol: new SimpleMarkerSymbol({
+          color: [...bookColor, 0.9],
+          size: size,
+          outline: { color: [255, 255, 255, 0.8], width: 1.5 },
+          style: "circle"
+        }),
+        attributes: { cityId: city.id, name: city.biblicalName, significance: city.significance }
+      }));
+
+      // Number inside the circle
+      citiesLayer.add(new Graphic({
+        geometry: new Point({ longitude: city.lng, latitude: city.lat, spatialReference: { wkid: 4326 } }),
+        symbol: new TextSymbol({
+          text: String(order),
+          color: [26, 17, 25, 1],
+          font: { size: 9, family: "Inter, sans-serif", weight: "bold" },
+          haloColor: [255, 255, 255, 0],
+          haloSize: 0,
+          yoffset: 0
+        }),
+        attributes: { cityId: city.id, name: city.biblicalName, significance: city.significance }
+      }));
+    } else {
+      // Regular dot markers
+      citiesLayer.add(new Graphic({
+        geometry: new Point({ longitude: city.lng, latitude: city.lat, spatialReference: { wkid: 4326 } }),
+        symbol: new SimpleMarkerSymbol({
+          color: [...bookColor, markerAlpha],
+          size: size,
+          outline: { color: [255, 255, 255, overview ? 0.2 : 0.6], width: overview ? 0.5 : 1 },
+          style: "circle"
+        }),
+        attributes: { cityId: city.id, name: city.biblicalName, significance: city.significance }
+      }));
+    }
 
     // Label
-    const showLabel = city.significance !== 'minor' || (mapView && mapView.zoom > 6);
+    const showLabel = showNumbers || city.significance !== 'minor' || (mapView && mapView.zoom > 6);
     if (showLabel) {
       labelsLayer.add(new Graphic({
         geometry: new Point({ longitude: city.lng, latitude: city.lat, spatialReference: { wkid: 4326 } }),
         symbol: new TextSymbol({
           text: city.biblicalName,
-          color: [245, 230, 200, 0.9],
+          color: [245, 230, 200, labelAlpha],
           font: { size: city.significance === 'major' ? 11 : 9, family: "Cinzel, serif", weight: "normal" },
           haloColor: [26, 17, 25, 0.8],
           haloSize: 2,
@@ -326,7 +392,6 @@ function openBottomSheet(city) {
     body.innerHTML = `<p style="color:var(--text-muted);padding:20px 0;">${t('noEvents')}</p>`;
   } else {
     body.innerHTML = events.map(event => {
-      const book = books.find(b => b.id === event.book);
       const tr = bookTranslations[lang]?.[event.book] || bookTranslations.en[event.book];
       return `
         <div class="event-card" data-book="${event.book}">
@@ -342,9 +407,14 @@ function openBottomSheet(city) {
     }).join('');
   }
 
-  // Navigation
-  navigableCities = getFilteredCities();
+  // Build navigable cities sorted by biblical order for this book
+  if (activeBook !== 'all') {
+    navigableCities = getBookOrderedCities(activeBook);
+  } else {
+    navigableCities = getFilteredCities();
+  }
   navIndex = navigableCities.findIndex(c => c.id === city.id);
+  if (navIndex < 0) navIndex = 0;
   updateNavCounter();
 
   sheet.classList.add('open');
@@ -375,6 +445,15 @@ function updateNavCounter() {
   counter.textContent = `${navIndex + 1} / ${navigableCities.length}`;
   document.getElementById('prevStop').disabled = navIndex <= 0;
   document.getElementById('nextStop').disabled = navIndex >= navigableCities.length - 1;
+  document.getElementById('firstStop').disabled = navIndex <= 0;
+}
+
+function navigateTo(index) {
+  if (index < 0 || index >= navigableCities.length) return;
+  navIndex = index;
+  const city = navigableCities[navIndex];
+  openBottomSheet(city);
+  mapView.goTo({ center: [city.lng, city.lat], zoom: Math.max(mapView.zoom, 7) }, { duration: 400 });
 }
 
 // --- ZOOM HELPERS ---
@@ -387,6 +466,108 @@ function zoomToBook(bookId) {
   }
   const points = bookCities.map(c => ({ type: "point", longitude: c.lng, latitude: c.lat }));
   mapView.goTo(points, { duration: 1000, easing: "ease-in-out" }).catch(() => {});
+}
+
+function zoomToCategory(category) {
+  const catCities = cities.filter(c => c.books.some(bId => {
+    const book = books.find(b => b.id === bId);
+    return book && book.category === category;
+  }));
+  if (catCities.length > 1) {
+    const points = catCities.map(c => ({ type: "point", longitude: c.lng, latitude: c.lat }));
+    mapView.goTo(points, { duration: 800 }).catch(() => {});
+  }
+}
+
+// --- SCRIPTURE PANEL (linked to active context) ---
+function openScripturePanelForContext() {
+  const panel = document.getElementById('scripturePanel');
+  panel.classList.add('open');
+  document.getElementById('scriptureSearch').value = '';
+  renderScriptureList('');
+}
+
+function toggleScripturePanel() {
+  const panel = document.getElementById('scripturePanel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    renderScriptureList('');
+  }
+}
+
+function renderScriptureList(filter) {
+  const body = document.getElementById('scripturePanelBody');
+  const search = filter.toLowerCase();
+
+  let chapters = allChapters;
+
+  // Filter by active book
+  if (activeBook !== 'all') {
+    const book = books.find(b => b.id === activeBook);
+    if (book) chapters = chapters.filter(c => c.bookName === book.name);
+  }
+  // Filter by active category
+  else if (activeCategory !== 'all') {
+    const categoryBooks = books.filter(b => b.category === activeCategory).map(b => b.name);
+    chapters = chapters.filter(c => categoryBooks.includes(c.bookName));
+  }
+
+  if (search) {
+    chapters = chapters.filter(c =>
+      `${c.bookName} ${c.chapter}`.toLowerCase().includes(search)
+    );
+  }
+
+  body.innerHTML = chapters.map(ch => {
+    const book = books.find(b => b.name === ch.bookName);
+    const color = book ? book.hexColor : '#C9A84C';
+    const isActive = selectedChapter && selectedChapter.bookName === ch.bookName && selectedChapter.chapter === ch.chapter;
+    return `
+      <div class="chapter-entry ${isActive ? 'active' : ''}" data-book-name="${ch.bookName}" data-chapter="${ch.chapter}">
+        <span><span class="chapter-dot" style="background:${color}"></span><span class="chapter-name">${displayVerse(ch.bookName)} ${ch.chapter}</span></span>
+        <span class="event-count">${ch.eventCount}</span>
+      </div>
+    `;
+  }).join('');
+
+  body.querySelectorAll('.chapter-entry').forEach(entry => {
+    entry.addEventListener('click', () => {
+      const bookName = entry.getAttribute('data-book-name');
+      const chapter = parseInt(entry.getAttribute('data-chapter'));
+
+      if (selectedChapter && selectedChapter.bookName === bookName && selectedChapter.chapter === chapter) {
+        // Deselect
+        selectedChapter = null;
+        closeBottomSheet();
+      } else {
+        // Select chapter
+        selectedChapter = { bookName, chapter };
+
+        // Find and open the first city that matches this chapter
+        const matchingCities = cities.filter(c =>
+          c.events.some(e => e.bookName === bookName && e.chapter === chapter)
+        );
+        if (matchingCities.length > 0) {
+          const firstCity = matchingCities[0];
+          // Close scripture panel to reveal the bottom sheet
+          document.getElementById('scripturePanel').classList.remove('open');
+          openBottomSheet(firstCity);
+          mapView.goTo({ center: [firstCity.lng, firstCity.lat], zoom: Math.max(mapView.zoom, 7) }, { duration: 500 });
+        }
+      }
+
+      refresh();
+      renderScriptureList(document.getElementById('scriptureSearch').value);
+
+      if (selectedChapter && !selectedCity) {
+        const filteredCities = getFilteredCities();
+        if (filteredCities.length > 0) {
+          const points = filteredCities.map(c => ({ type: "point", longitude: c.lng, latitude: c.lat }));
+          mapView.goTo(points, { duration: 600 }).catch(() => {});
+        }
+      }
+    });
+  });
 }
 
 // --- EVENT LISTENERS ---
@@ -410,23 +591,10 @@ function setupEventListeners() {
   // Sheet close
   document.getElementById('sheetClose').addEventListener('click', closeBottomSheet);
 
-  // Prev / Next
-  document.getElementById('prevStop').addEventListener('click', () => {
-    if (navIndex > 0) {
-      navIndex--;
-      const city = navigableCities[navIndex];
-      openBottomSheet(city);
-      mapView.goTo({ center: [city.lng, city.lat] }, { duration: 400 });
-    }
-  });
-  document.getElementById('nextStop').addEventListener('click', () => {
-    if (navIndex < navigableCities.length - 1) {
-      navIndex++;
-      const city = navigableCities[navIndex];
-      openBottomSheet(city);
-      mapView.goTo({ center: [city.lng, city.lat] }, { duration: 400 });
-    }
-  });
+  // First / Prev / Next navigation
+  document.getElementById('firstStop').addEventListener('click', () => navigateTo(0));
+  document.getElementById('prevStop').addEventListener('click', () => navigateTo(navIndex - 1));
+  document.getElementById('nextStop').addEventListener('click', () => navigateTo(navIndex + 1));
 
   // Category buttons
   document.querySelectorAll('.category-btn').forEach(btn => {
@@ -439,17 +607,14 @@ function setupEventListeners() {
       closeBottomSheet();
       generateBookChips();
       refresh();
+
       if (activeCategory !== 'all') {
-        const catCities = cities.filter(c => c.books.some(bId => {
-          const book = books.find(b => b.id === bId);
-          return book && book.category === activeCategory;
-        }));
-        if (catCities.length > 1) {
-          const points = catCities.map(c => ({ type: "point", longitude: c.lng, latitude: c.lat }));
-          mapView.goTo(points, { duration: 800 }).catch(() => {});
-        }
+        zoomToCategory(activeCategory);
+        // Auto-open scripture panel linked to this category
+        openScripturePanelForContext();
       } else {
         mapView.goTo({ center: [37, 32], zoom: 5 }, { duration: 800 });
+        document.getElementById('scripturePanel').classList.remove('open');
       }
     });
   });
@@ -476,6 +641,19 @@ function setupEventListeners() {
     }
   });
 
+  // Donate modal
+  document.getElementById('btnDonate').addEventListener('click', () => {
+    document.getElementById('donateOverlay').classList.add('open');
+  });
+  document.getElementById('closeDonate').addEventListener('click', () => {
+    document.getElementById('donateOverlay').classList.remove('open');
+  });
+  document.getElementById('donateOverlay').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('donateOverlay')) {
+      document.getElementById('donateOverlay').classList.remove('open');
+    }
+  });
+
   // Language toggle
   document.getElementById('btnLang').addEventListener('click', () => {
     const newLang = lang === 'en' ? 'es' : 'en';
@@ -484,6 +662,9 @@ function setupEventListeners() {
     generateBookChips();
     refresh();
     if (selectedCity) openBottomSheet(selectedCity);
+    if (document.getElementById('scripturePanel').classList.contains('open')) {
+      renderScriptureList(document.getElementById('scriptureSearch').value);
+    }
   });
 
   // Zoom change: toggle minor labels
@@ -500,66 +681,6 @@ function setupEventListeners() {
   sheet.addEventListener('touchmove', (e) => {
     const diff = e.touches[0].clientY - touchStartY;
     if (diff > 100) closeBottomSheet();
-  });
-}
-
-// --- SCRIPTURE PANEL ---
-function toggleScripturePanel() {
-  const panel = document.getElementById('scripturePanel');
-  panel.classList.toggle('open');
-  if (panel.classList.contains('open')) {
-    renderScriptureList('');
-  }
-}
-
-function renderScriptureList(filter) {
-  const body = document.getElementById('scripturePanelBody');
-  const search = filter.toLowerCase();
-
-  let chapters = allChapters;
-  if (activeBook !== 'all') {
-    const book = books.find(b => b.id === activeBook);
-    if (book) chapters = chapters.filter(c => c.bookName === book.name);
-  }
-  if (search) {
-    chapters = chapters.filter(c =>
-      `${c.bookName} ${c.chapter}`.toLowerCase().includes(search)
-    );
-  }
-
-  body.innerHTML = chapters.map(ch => {
-    const book = books.find(b => b.name === ch.bookName);
-    const color = book ? book.hexColor : '#C9A84C';
-    const isActive = selectedChapter && selectedChapter.bookName === ch.bookName && selectedChapter.chapter === ch.chapter;
-    return `
-      <div class="chapter-entry ${isActive ? 'active' : ''}" data-book-name="${ch.bookName}" data-chapter="${ch.chapter}">
-        <span><span class="chapter-dot" style="background:${color}"></span><span class="chapter-name">${displayVerse(ch.bookName)} ${ch.chapter}</span></span>
-        <span class="event-count">${ch.eventCount}</span>
-      </div>
-    `;
-  }).join('');
-
-  body.querySelectorAll('.chapter-entry').forEach(entry => {
-    entry.addEventListener('click', () => {
-      const bookName = entry.getAttribute('data-book-name');
-      const chapter = parseInt(entry.getAttribute('data-chapter'));
-      if (selectedChapter && selectedChapter.bookName === bookName && selectedChapter.chapter === chapter) {
-        selectedChapter = null;
-      } else {
-        selectedChapter = { bookName, chapter };
-      }
-      closeBottomSheet();
-      refresh();
-      renderScriptureList(document.getElementById('scriptureSearch').value);
-
-      if (selectedChapter) {
-        const filteredCities = getFilteredCities();
-        if (filteredCities.length > 0) {
-          const points = filteredCities.map(c => ({ type: "point", longitude: c.lng, latitude: c.lat }));
-          mapView.goTo(points, { duration: 600 }).catch(() => {});
-        }
-      }
-    });
   });
 }
 

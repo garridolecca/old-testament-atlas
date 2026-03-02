@@ -33,7 +33,13 @@ export const ui = {
     feature5: "Bilingual support (English/Spanish)",
     close: "Close",
     noEvents: "No events found",
-    allJourneys: "All"
+    allJourneys: "All",
+    first: "\u21e4 First",
+    donateTitle: "Support This Project",
+    donateText: "This map is free and ad-free. If it has been a blessing to you, consider supporting its development.",
+    donateButton: "Donate",
+    donateEmailLabel: "Questions or feedback?",
+    support: "Support"
   },
   es: {
     splashTitle: "Atlas del Antiguo Testamento",
@@ -63,7 +69,13 @@ export const ui = {
     feature5: "Soporte biling\u00fce (Ingl\u00e9s/Espa\u00f1ol)",
     close: "Cerrar",
     noEvents: "No se encontraron eventos",
-    allJourneys: "Todos"
+    allJourneys: "Todos",
+    first: "\u21e4 Primero",
+    donateTitle: "Apoya Este Proyecto",
+    donateText: "Este mapa es gratuito y sin anuncios. Si ha sido de bendici\u00f3n para ti, considera apoyar su desarrollo.",
+    donateButton: "Donar",
+    donateEmailLabel: "\u00bfPreguntas o comentarios?",
+    support: "Apoyar"
   }
 };
 

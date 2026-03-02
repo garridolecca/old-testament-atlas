@@ -50,6 +50,7 @@
       </div>
       <div class="header-actions">
         <button id="btnScripture" class="header-btn" data-i18n="scriptures">Scriptures</button>
+        <button id="btnDonate" class="header-btn header-btn-donate" data-i18n="support">Support</button>
         <button id="btnInfo" class="header-btn" data-i18n="about">About</button>
         <button id="btnLang" class="header-btn lang-toggle">EN/ES</button>
       </div>
@@ -85,6 +86,7 @@
       </div>
       <div class="sheet-body" id="sheetBody"></div>
       <div class="sheet-nav">
+        <button class="nav-btn nav-btn-first" id="firstStop" data-i18n="first">&#8676; First</button>
         <button class="nav-btn" id="prevStop" data-i18n="previous">&#8592; Previous</button>
         <span class="nav-counter" id="navCounter">1 / 10</span>
         <button class="nav-btn" id="nextStop" data-i18n="next">Next &#8594;</button>
@@ -125,6 +127,38 @@
             <li data-i18n="feature4">Scripture references with direct quotes</li>
             <li data-i18n="feature5">Bilingual support (English/Spanish)</li>
           </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Donate Modal -->
+  <div id="donateOverlay" class="modal-overlay">
+    <div class="modal-card modal-card-sm">
+      <div class="modal-header">
+        <h2 id="donateModalTitle" data-i18n="donateTitle">Support This Project</h2>
+        <button class="modal-close" id="closeDonate">&#10005;</button>
+      </div>
+      <div class="donate-content">
+        <p id="donateText" class="donate-text" data-i18n="donateText">This map is free and ad-free. If it has been a blessing to you, consider supporting its development.</p>
+        <div class="donate-buttons">
+          <a href="https://venmo.com/u/garridolecca" target="_blank" rel="noopener" class="donate-venmo-btn">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.41 1.87c.75 1.22 1.09 2.48 1.09 4.07 0 5.07-4.33 11.65-7.84 16.27H6.59L3.5 2.23l6.76-.62 1.73 13.86C13.87 12.42 16 7.6 16 4.79c0-1.52-.26-2.56-.67-3.4l5.08.48z"/></svg>
+            <span id="donateBtnLabel">Donate via Venmo</span>
+          </a>
+          <a href="https://paypal.me/cgarridolecca" target="_blank" rel="noopener" class="donate-paypal-btn">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19.5 6.2c.5-2.8 0-4.7-1.7-6.4C16.1-1.8 13.3-.8 10.5-.8H4.2c-.5 0-.9.4-1 .9L.8 18c-.1.4.2.7.6.7h4.3l1.1-6.8c.1-.5.5-.9 1-.9h2.1c4.1 0 7.3-1.7 8.2-6.5 0-.1.1-.3.1-.4z" transform="translate(1.5 3)"/></svg>
+            <span id="donatePaypalLabel">Donate via PayPal</span>
+          </a>
+        </div>
+        <div class="donate-qr-section">
+          <p class="donate-qr-label">Or scan this QR code (Venmo):</p>
+          <img class="donate-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://venmo.com/u/garridolecca&bgcolor=2d2329&color=C9A84C" alt="Venmo QR Code" width="150" height="150">
+        </div>
+        <div class="donate-divider"></div>
+        <div class="donate-email">
+          <p class="donate-email-label" data-i18n="donateEmailLabel">Questions or feedback?</p>
+          <a href="mailto:garridolecca.rivera@gmail.com" class="donate-email-link">garridolecca.rivera@gmail.com</a>
         </div>
       </div>
     </div>
