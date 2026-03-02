@@ -94,6 +94,7 @@ async function initMap() {
       document.getElementById('splash').style.display = 'none';
     }, 600);
 
+    window._mapView = mapView; // expose for testing
     generateBookChips();
     drawAll();
     setupEventListeners();
@@ -175,9 +176,10 @@ function generateBookChips() {
 
 // --- DRAWING FUNCTIONS ---
 function drawAll() {
+  placedLabels = []; // Reset collision tracker
   drawRoutes();
-  drawCities();
-  drawGeoLabels();
+  drawGeoLabels();  // Geo labels first (background context)
+  drawCities();     // City labels on top (check collisions against geo labels too)
 }
 
 function refresh() {
@@ -289,59 +291,127 @@ function drawCities() {
       }));
     }
 
-    // Label
-    const showLabel = showNumbers || city.significance !== 'minor' || (mapView && mapView.zoom > 6);
+    // Label — zoom-tiered visibility with collision detection
+    const zoom = mapView ? mapView.zoom : 5;
+    let showLabel = false;
+
+    if (showNumbers) {
+      // When a book is selected, always show labels
+      showLabel = true;
+    } else if (city.significance === 'major') {
+      // Top-tier landmarks visible at zoom >= 4, but at very wide zoom only a handful
+      if (zoom >= 7) showLabel = true;
+      else if (zoom >= 5.5) showLabel = true;
+      else {
+        // At widest zoom, only show the absolute top landmarks
+        const topLandmarks = ['jerusalem','babel','sinai','nineveh','ur','memphis','susa','damascus'];
+        showLabel = topLandmarks.includes(city.id);
+      }
+    } else if (city.significance === 'moderate') {
+      showLabel = zoom >= 7;
+    } else {
+      // minor
+      showLabel = zoom >= 8.5;
+    }
+
     if (showLabel) {
-      labelsLayer.add(new Graphic({
-        geometry: new Point({ longitude: city.lng, latitude: city.lat, spatialReference: { wkid: 4326 } }),
-        symbol: new TextSymbol({
-          text: city.biblicalName,
-          color: [245, 230, 200, labelAlpha],
-          font: { size: city.significance === 'major' ? 11 : 9, family: "Cinzel, serif", weight: "normal" },
-          haloColor: [26, 17, 25, 0.8],
-          haloSize: 2,
-          yoffset: size + 4
-        })
-      }));
+      const fontSize = city.significance === 'major' ? (zoom < 6 ? 10 : 11) : 9;
+      const screenPt = mapView.toScreen({ x: city.lng, y: city.lat, spatialReference: { wkid: 4326 } });
+      const estWidth = city.biblicalName.length * fontSize * 0.55;
+      const estHeight = fontSize * 1.4;
+      const yOff = size + 4;
+      const labelBox = {
+        x: screenPt.x - estWidth / 2,
+        y: screenPt.y - yOff - estHeight,
+        w: estWidth,
+        h: estHeight
+      };
+
+      if (!labelCollides(labelBox)) {
+        placedLabels.push(labelBox);
+        labelsLayer.add(new Graphic({
+          geometry: new Point({ longitude: city.lng, latitude: city.lat, spatialReference: { wkid: 4326 } }),
+          symbol: new TextSymbol({
+            text: city.biblicalName,
+            color: [245, 230, 200, labelAlpha],
+            font: { size: fontSize, family: "Cinzel, serif", weight: "normal" },
+            haloColor: [26, 17, 25, 0.8],
+            haloSize: 2,
+            yoffset: yOff
+          })
+        }));
+      }
     }
   });
 }
 
+// --- LABEL COLLISION DETECTION ---
+let placedLabels = [];
+
+function labelCollides(box) {
+  const pad = 4; // padding between labels
+  for (const placed of placedLabels) {
+    if (box.x < placed.x + placed.w + pad &&
+        box.x + box.w + pad > placed.x &&
+        box.y < placed.y + placed.h + pad &&
+        box.y + box.h + pad > placed.y) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function drawGeoLabels() {
+  const zoom = mapView ? mapView.zoom : 5;
   const geoLabels = [
-    { text: "EGYPT", lat: 27.5, lng: 30.5, size: 14, style: "normal" },
-    { text: "ASSYRIA", lat: 35.5, lng: 43.0, size: 14, style: "normal" },
-    { text: "BABYLONIA", lat: 31.5, lng: 45.5, size: 14, style: "normal" },
-    { text: "PERSIA", lat: 31.0, lng: 52.0, size: 14, style: "normal" },
-    { text: "CANAAN", lat: 32.5, lng: 35.0, size: 12, style: "normal" },
-    { text: "EDOM", lat: 30.2, lng: 35.3, size: 10, style: "normal" },
-    { text: "MOAB", lat: 31.3, lng: 36.0, size: 10, style: "normal" },
-    { text: "ARAM", lat: 34.5, lng: 37.5, size: 10, style: "normal" },
-    { text: "Mediterranean Sea", lat: 34.0, lng: 31.0, size: 12, style: "italic" },
-    { text: "Red Sea", lat: 26.5, lng: 35.0, size: 11, style: "italic" },
-    { text: "Dead Sea", lat: 31.5, lng: 35.55, size: 9, style: "italic" },
-    { text: "Persian Gulf", lat: 28.0, lng: 50.0, size: 11, style: "italic" },
-    { text: "Sea of Galilee", lat: 32.82, lng: 35.58, size: 8, style: "italic" },
-    { text: "SINAI", lat: 29.0, lng: 33.5, size: 10, style: "normal" },
-    { text: "PHOENICIA", lat: 34.0, lng: 35.5, size: 9, style: "normal" }
+    { text: "EGYPT", lat: 27.5, lng: 30.5, size: 14, style: "normal", minZoom: 3 },
+    { text: "ASSYRIA", lat: 35.5, lng: 43.0, size: 14, style: "normal", minZoom: 3 },
+    { text: "BABYLONIA", lat: 31.5, lng: 45.5, size: 14, style: "normal", minZoom: 3 },
+    { text: "PERSIA", lat: 31.0, lng: 52.0, size: 14, style: "normal", minZoom: 3 },
+    { text: "Mediterranean Sea", lat: 34.0, lng: 31.0, size: 12, style: "italic", minZoom: 3 },
+    { text: "CANAAN", lat: 32.5, lng: 35.0, size: 12, style: "normal", minZoom: 5 },
+    { text: "ARAM", lat: 34.5, lng: 37.5, size: 10, style: "normal", minZoom: 5.5 },
+    { text: "Red Sea", lat: 26.5, lng: 35.0, size: 11, style: "italic", minZoom: 5 },
+    { text: "Persian Gulf", lat: 28.0, lng: 50.0, size: 11, style: "italic", minZoom: 4 },
+    { text: "SINAI", lat: 29.0, lng: 33.5, size: 10, style: "normal", minZoom: 6 },
+    { text: "EDOM", lat: 30.2, lng: 35.3, size: 10, style: "normal", minZoom: 7 },
+    { text: "MOAB", lat: 31.3, lng: 36.0, size: 10, style: "normal", minZoom: 7 },
+    { text: "Dead Sea", lat: 31.5, lng: 35.55, size: 9, style: "italic", minZoom: 7 },
+    { text: "Sea of Galilee", lat: 32.82, lng: 35.58, size: 8, style: "italic", minZoom: 7.5 },
+    { text: "PHOENICIA", lat: 34.0, lng: 35.5, size: 9, style: "normal", minZoom: 7.5 }
   ];
 
   geoLabels.forEach(lbl => {
-    labelsLayer.add(new Graphic({
-      geometry: new Point({ longitude: lbl.lng, latitude: lbl.lat, spatialReference: { wkid: 4326 } }),
-      symbol: new TextSymbol({
-        text: lbl.text,
-        color: [255, 255, 255, lbl.style === "italic" ? 0.25 : 0.3],
-        font: {
-          size: lbl.size,
-          family: lbl.style === "italic" ? "Inter, sans-serif" : "Cinzel, serif",
-          weight: "normal",
-          style: lbl.style
-        },
-        haloColor: [0, 0, 0, 0.2],
-        haloSize: 1
-      })
-    }));
+    if (zoom < lbl.minZoom) return;
+
+    const screenPt = mapView.toScreen({ x: lbl.lng, y: lbl.lat, spatialReference: { wkid: 4326 } });
+    const estWidth = lbl.text.length * lbl.size * 0.55;
+    const estHeight = lbl.size * 1.4;
+    const geoBox = {
+      x: screenPt.x - estWidth / 2,
+      y: screenPt.y - estHeight / 2,
+      w: estWidth,
+      h: estHeight
+    };
+
+    if (!labelCollides(geoBox)) {
+      placedLabels.push(geoBox);
+      labelsLayer.add(new Graphic({
+        geometry: new Point({ longitude: lbl.lng, latitude: lbl.lat, spatialReference: { wkid: 4326 } }),
+        symbol: new TextSymbol({
+          text: lbl.text,
+          color: [255, 255, 255, lbl.style === "italic" ? 0.25 : 0.3],
+          font: {
+            size: lbl.size,
+            family: lbl.style === "italic" ? "Inter, sans-serif" : "Cinzel, serif",
+            weight: "normal",
+            style: lbl.style
+          },
+          haloColor: [0, 0, 0, 0.2],
+          haloSize: 1
+        })
+      }));
+    }
   });
 }
 
