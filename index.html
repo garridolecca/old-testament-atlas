@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Old Testament Atlas — Interactive Bible Map</title>
+  <meta name="description" content="Explore the geography of all 39 Old Testament books through an interactive map">
+  <link rel="stylesheet" href="https://js.arcgis.com/4.31/esri/themes/dark/main.css">
+  <script src="https://js.arcgis.com/4.31/"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- Language Selector -->
+  <div id="langSelector" class="lang-overlay">
+    <div class="lang-card">
+      <div class="lang-icon">&#9733;</div>
+      <h2 class="lang-title">Old Testament Atlas</h2>
+      <p class="lang-subtitle">Choose your language / Elige tu idioma</p>
+      <div class="lang-buttons">
+        <button class="lang-btn" data-lang="en"><span class="lang-flag">EN</span><span>English</span></button>
+        <button class="lang-btn" data-lang="es"><span class="lang-flag">ES</span><span>Español</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Splash Screen -->
+  <div id="splash" class="splash-screen" style="display:none;">
+    <div class="splash-content">
+      <div class="splash-icon">&#10017;</div>
+      <h1 class="splash-title" data-i18n="splashTitle">Old Testament Atlas</h1>
+      <p class="splash-verse" data-i18n="splashVerse">"Your word is a lamp to my feet and a light to my path." — Psalm 119:105</p>
+      <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+      <p class="loading-text" data-i18n="loading">Loading the ancient world...</p>
+    </div>
+  </div>
+
+  <!-- Main App Shell -->
+  <div id="appShell" class="app-shell">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-logo">
+        <span class="header-icon">&#10017;</span>
+        <div class="header-text">
+          <h1 data-i18n="appTitle">Old Testament Atlas</h1>
+          <p data-i18n="appSubtitle">Interactive Bible Geography</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btnScripture" class="header-btn" data-i18n="scriptures">Scriptures</button>
+        <button id="btnInfo" class="header-btn" data-i18n="about">About</button>
+        <button id="btnLang" class="header-btn lang-toggle">EN/ES</button>
+      </div>
+    </header>
+
+    <!-- Category Bar -->
+    <div id="categoryBar" class="category-bar">
+      <button class="category-btn active" data-category="all" data-i18n="allBooks">All Books</button>
+      <button class="category-btn" data-category="law" data-i18n="catLaw">Law</button>
+      <button class="category-btn" data-category="history" data-i18n="catHistory">History</button>
+      <button class="category-btn" data-category="wisdom" data-i18n="catWisdom">Wisdom</button>
+      <button class="category-btn" data-category="major-prophet" data-i18n="catMajorProphets">Major Prophets</button>
+      <button class="category-btn" data-category="minor-prophet" data-i18n="catMinorProphets">Minor Prophets</button>
+    </div>
+
+    <!-- Book Chips Bar -->
+    <div id="bookBar" class="book-bar">
+      <div class="book-chips" id="bookChips"></div>
+    </div>
+
+    <!-- Map -->
+    <div id="viewDiv"></div>
+
+    <!-- Bottom Sheet -->
+    <div id="bottomSheet" class="bottom-sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div class="sheet-title-group">
+          <h2 class="sheet-title" id="sheetTitle">City Name</h2>
+          <p class="sheet-subtitle" id="sheetSubtitle">Modern Name</p>
+        </div>
+        <button class="sheet-close" id="sheetClose">&#10005;</button>
+      </div>
+      <div class="sheet-body" id="sheetBody"></div>
+      <div class="sheet-nav">
+        <button class="nav-btn" id="prevStop" data-i18n="previous">&#8592; Previous</button>
+        <span class="nav-counter" id="navCounter">1 / 10</span>
+        <button class="nav-btn" id="nextStop" data-i18n="next">Next &#8594;</button>
+      </div>
+    </div>
+
+    <!-- Scripture Panel -->
+    <div id="scripturePanel" class="scripture-panel">
+      <div class="panel-header">
+        <h3 data-i18n="scriptureFilter">Scripture Filter</h3>
+        <button class="panel-close" id="scripturePanelClose">&#10005;</button>
+      </div>
+      <div class="panel-search">
+        <input type="text" id="scriptureSearch" placeholder="Search chapters..." data-i18n-placeholder="searchChapters">
+      </div>
+      <div class="panel-body" id="scripturePanelBody"></div>
+    </div>
+  </div>
+
+  <!-- Info Modal -->
+  <div id="infoModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 data-i18n="aboutTitle">About This Atlas</h2>
+        <button class="modal-close" id="infoModalClose">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <div class="legend">
+          <h3 data-i18n="bookCategories">Book Categories</h3>
+          <div class="legend-items" id="legendItems"></div>
+        </div>
+        <div class="features">
+          <h3 data-i18n="features">Features</h3>
+          <ul>
+            <li data-i18n="feature1">Interactive map of all 39 Old Testament books</li>
+            <li data-i18n="feature2">Click any city to see biblical events</li>
+            <li data-i18n="feature3">Filter by book or category</li>
+            <li data-i18n="feature4">Scripture references with direct quotes</li>
+            <li data-i18n="feature5">Bilingual support (English/Spanish)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
