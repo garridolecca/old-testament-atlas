@@ -1,23 +1,23 @@
 /* ============================================
    OLD TESTAMENT ATLAS — STYLES
-   Dark biblical theme with gold accents
+   Light gray theme with warm accents
    ============================================ */
 
 /* --- CSS Variables --- */
 :root {
-  --deep-bg: #1a1119;
-  --panel-bg: #221a20;
-  --card-bg: #2d2329;
-  --card-hover: #382e35;
-  --border-color: #3d3339;
-  --gold: #C9A84C;
-  --gold-light: #E8D5A0;
-  --gold-dim: #8B7533;
-  --parchment: #F5E6C8;
-  --parchment-dim: #C4B59A;
-  --text-primary: #F5E6C8;
-  --text-secondary: #B0A090;
-  --text-muted: #7A6A5A;
+  --deep-bg: #f4f1ed;
+  --panel-bg: #ffffff;
+  --card-bg: #f7f5f2;
+  --card-hover: #eeeae5;
+  --border-color: #ddd8d2;
+  --gold: #8B6914;
+  --gold-light: #A07D1C;
+  --gold-dim: #6B5210;
+  --parchment: #3B2F20;
+  --parchment-dim: #5A4D3E;
+  --text-primary: #2C2418;
+  --text-secondary: #5A5040;
+  --text-muted: #9A8E80;
   --cat-law: #C9A84C;
   --cat-history: #5B7FA5;
   --cat-wisdom: #E6B800;
@@ -58,14 +58,14 @@ body {
 .lang-overlay {
   position: fixed; inset: 0; z-index: 10001;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(10,6,10,0.95);
+  background: rgba(244,241,237,0.97);
   backdrop-filter: blur(20px);
 }
 .lang-card {
-  background: linear-gradient(135deg, var(--panel-bg), var(--card-bg));
-  border: 1px solid var(--gold-dim);
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
   border-radius: 16px; padding: 48px; text-align: center;
-  box-shadow: 0 0 60px rgba(201,168,76,0.15);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.1);
   max-width: 400px; width: 90%;
 }
 .lang-icon { font-size: 48px; color: var(--gold); margin-bottom: 16px; }
@@ -75,18 +75,18 @@ body {
 .lang-btn {
   display: flex; align-items: center; gap: 10px;
   padding: 14px 28px; border-radius: 10px;
-  background: rgba(201,168,76,0.1); border: 1px solid var(--gold-dim);
-  color: var(--parchment); font-family: var(--font-body); font-size: 16px;
+  background: var(--card-bg); border: 1px solid var(--border-color);
+  color: var(--text-primary); font-family: var(--font-body); font-size: 16px;
   cursor: pointer; transition: all 0.3s;
 }
-.lang-btn:hover { background: var(--gold); color: var(--deep-bg); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(201,168,76,0.3); }
+.lang-btn:hover { background: var(--gold); color: #fff; transform: translateY(-2px); box-shadow: 0 4px 20px rgba(139,105,20,0.25); }
 .lang-flag { font-weight: 700; font-size: 14px; opacity: 0.7; }
 
 /* --- Splash Screen --- */
 .splash-screen {
   position: fixed; inset: 0; z-index: 10000;
   display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(ellipse at center, #2a1f28 0%, var(--deep-bg) 70%);
+  background: radial-gradient(ellipse at center, #fff 0%, var(--deep-bg) 70%);
 }
 .splash-content { text-align: center; animation: fadeIn 1s ease; }
 .splash-icon { font-size: 64px; color: var(--gold); margin-bottom: 20px; animation: glowPulse 2s ease-in-out infinite; }
@@ -115,7 +115,7 @@ body {
   background: transparent; color: var(--text-secondary); font-family: var(--font-body);
   font-size: 12px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
 }
-.header-btn:hover { color: var(--gold); border-color: var(--gold-dim); background: rgba(201,168,76,0.1); }
+.header-btn:hover { color: var(--gold); border-color: var(--gold-dim); background: rgba(139,105,20,0.08); }
 
 /* --- Category Bar --- */
 .category-bar {
@@ -129,17 +129,17 @@ body {
   font-size: 11px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
 }
 .category-btn:hover { color: var(--text-secondary); border-color: var(--text-muted); }
-.category-btn.active { background: var(--gold); color: var(--deep-bg); border-color: var(--gold); font-weight: 600; }
+.category-btn.active { background: var(--gold); color: #fff; border-color: var(--gold); font-weight: 600; }
 .category-btn.active[data-category="law"] { background: var(--cat-law); border-color: var(--cat-law); }
 .category-btn.active[data-category="history"] { background: var(--cat-history); border-color: var(--cat-history); }
-.category-btn.active[data-category="wisdom"] { background: var(--cat-wisdom); border-color: var(--cat-wisdom); color: var(--deep-bg); }
+.category-btn.active[data-category="wisdom"] { background: var(--cat-wisdom); border-color: var(--cat-wisdom); color: #2C2418; }
 .category-btn.active[data-category="major-prophet"] { background: var(--cat-major-prophet); border-color: var(--cat-major-prophet); }
 .category-btn.active[data-category="minor-prophet"] { background: var(--cat-minor-prophet); border-color: var(--cat-minor-prophet); }
 
 /* --- Book Chips Bar --- */
 .book-bar {
   height: var(--book-bar-height); display: flex; align-items: center;
-  background: rgba(26,17,25,0.95); border-bottom: 1px solid var(--border-color);
+  background: var(--panel-bg); border-bottom: 1px solid var(--border-color);
   flex-shrink: 0; overflow: hidden; z-index: 98;
 }
 .book-chips {
@@ -157,21 +157,21 @@ body {
 .book-chip:hover { border-color: var(--text-muted); color: var(--text-primary); }
 .chip-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .chip-label { pointer-events: none; }
-.book-chip.active { color: var(--deep-bg); font-weight: 600; }
+.book-chip.active { color: #fff; font-weight: 600; }
 
 /* Book chip active states */
 .book-chip.active[data-book="all"] { background: var(--gold); border-color: var(--gold); }
 .book-chip.active[data-book="1"] { background: var(--book-1); border-color: var(--book-1); }
 .book-chip.active[data-book="2"] { background: var(--book-2); border-color: var(--book-2); }
-.book-chip.active[data-book="3"] { background: var(--book-3); border-color: var(--book-3); }
-.book-chip.active[data-book="4"] { background: var(--book-4); border-color: var(--book-4); }
+.book-chip.active[data-book="3"] { background: var(--book-3); border-color: var(--book-3); color:#2C2418; }
+.book-chip.active[data-book="4"] { background: var(--book-4); border-color: var(--book-4); color:#2C2418; }
 .book-chip.active[data-book="5"] { background: var(--book-5); border-color: var(--book-5); }
 .book-chip.active[data-book="6"] { background: var(--book-6); border-color: var(--book-6); color:#fff; }
 .book-chip.active[data-book="7"] { background: var(--book-7); border-color: var(--book-7); }
 .book-chip.active[data-book="8"] { background: var(--book-8); border-color: var(--book-8); }
 .book-chip.active[data-book="9"] { background: var(--book-9); border-color: var(--book-9); }
 .book-chip.active[data-book="10"] { background: var(--book-10); border-color: var(--book-10); color:#fff; }
-.book-chip.active[data-book="11"] { background: var(--book-11); border-color: var(--book-11); }
+.book-chip.active[data-book="11"] { background: var(--book-11); border-color: var(--book-11); color:#2C2418; }
 .book-chip.active[data-book="12"] { background: var(--book-12); border-color: var(--book-12); color:#fff; }
 .book-chip.active[data-book="13"] { background: var(--book-13); border-color: var(--book-13); color:#fff; }
 .book-chip.active[data-book="14"] { background: var(--book-14); border-color: var(--book-14); color:#fff; }
@@ -180,8 +180,8 @@ body {
 .book-chip.active[data-book="17"] { background: var(--book-17); border-color: var(--book-17); color:#fff; }
 .book-chip.active[data-book="18"] { background: var(--book-18); border-color: var(--book-18); color:#fff; }
 .book-chip.active[data-book="19"] { background: var(--book-19); border-color: var(--book-19); color:#fff; }
-.book-chip.active[data-book="20"] { background: var(--book-20); border-color: var(--book-20); }
-.book-chip.active[data-book="21"] { background: var(--book-21); border-color: var(--book-21); }
+.book-chip.active[data-book="20"] { background: var(--book-20); border-color: var(--book-20); color:#2C2418; }
+.book-chip.active[data-book="21"] { background: var(--book-21); border-color: var(--book-21); color:#2C2418; }
 .book-chip.active[data-book="22"] { background: var(--book-22); border-color: var(--book-22); color:#fff; }
 .book-chip.active[data-book="23"] { background: var(--book-23); border-color: var(--book-23); color:#fff; }
 .book-chip.active[data-book="24"] { background: var(--book-24); border-color: var(--book-24); color:#fff; }
@@ -203,7 +203,7 @@ body {
 
 /* --- Map --- */
 #viewDiv {
-  flex: 1; position: relative; background: #0d0a0d;
+  flex: 1; position: relative; background: #e8e4df;
 }
 .esri-ui-corner { display: none; }
 .esri-view-surface--inset-outline:focus::after { outline: none !important; }
@@ -216,7 +216,7 @@ body {
   border-radius: 16px 16px 0 0; z-index: 200;
   transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
   display: flex; flex-direction: column;
-  box-shadow: 0 -8px 40px rgba(0,0,0,0.5);
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.12);
 }
 .bottom-sheet.open { transform: translateY(0); }
 .sheet-handle {
@@ -262,13 +262,13 @@ body {
 .event-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
 .book-tag {
   padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;
-  color: var(--deep-bg); background: var(--gold); white-space: nowrap;
+  color: #fff; background: var(--gold); white-space: nowrap;
 }
 .event-action { font-family: var(--font-display); font-size: 14px; color: var(--parchment); }
 .event-description { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.5; }
 .event-quote {
-  font-style: italic; font-size: 12px; color: var(--gold-light); padding: 8px 12px;
-  background: rgba(201,168,76,0.06); border-radius: 6px; margin-bottom: 6px;
+  font-style: italic; font-size: 12px; color: var(--gold); padding: 8px 12px;
+  background: rgba(139,105,20,0.06); border-radius: 6px; margin-bottom: 6px;
   border-left: 2px solid var(--gold-dim); line-height: 1.5;
 }
 .event-verse { font-size: 11px; color: var(--text-muted); text-align: right; }
@@ -348,7 +348,7 @@ body {
   transition: background 0.2s; margin-bottom: 2px;
 }
 .chapter-entry:hover { background: var(--card-bg); }
-.chapter-entry.active { background: rgba(201,168,76,0.15); }
+.chapter-entry.active { background: rgba(139,105,20,0.1); }
 .chapter-name { font-size: 13px; color: var(--text-primary); }
 .chapter-dot { width: 6px; height: 6px; border-radius: 50%; margin-right: 8px; display: inline-block; }
 .event-count {
@@ -360,13 +360,13 @@ body {
 .modal-overlay {
   position: fixed; inset: 0; z-index: 500;
   display: none; align-items: center; justify-content: center;
-  background: rgba(10,6,10,0.85); backdrop-filter: blur(10px);
+  background: rgba(0,0,0,0.35); backdrop-filter: blur(10px);
 }
 .modal-overlay.open { display: flex; }
 .modal-card {
   background: var(--panel-bg); border: 1px solid var(--border-color);
   border-radius: 16px; max-width: 500px; width: 90%; max-height: 80vh;
-  overflow-y: auto;
+  overflow-y: auto; box-shadow: 0 16px 48px rgba(0,0,0,0.15);
 }
 .modal-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -398,11 +398,11 @@ body {
 /* --- Support/Donate Button --- */
 .header-btn-donate {
   color: var(--gold) !important;
-  border-color: rgba(201,168,76,0.35) !important;
-  background: rgba(201,168,76,0.08) !important;
+  border-color: rgba(139,105,20,0.3) !important;
+  background: rgba(139,105,20,0.06) !important;
 }
 .header-btn-donate:hover {
-  background: rgba(201,168,76,0.18) !important;
+  background: rgba(139,105,20,0.12) !important;
   border-color: var(--gold) !important;
 }
 
@@ -435,15 +435,15 @@ body {
 
 /* --- Navigation First Button --- */
 .nav-btn-first {
-  background: rgba(201,168,76,0.1); border-color: var(--gold-dim); color: var(--gold);
+  background: rgba(139,105,20,0.06); border-color: var(--gold-dim); color: var(--gold);
 }
-.nav-btn-first:hover { background: rgba(201,168,76,0.2); }
+.nav-btn-first:hover { background: rgba(139,105,20,0.12); }
 
 /* --- Animations --- */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes glowPulse {
-  0%, 100% { filter: drop-shadow(0 0 8px rgba(201,168,76,0.4)); }
-  50% { filter: drop-shadow(0 0 20px rgba(201,168,76,0.8)); }
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(139,105,20,0.3)); }
+  50% { filter: drop-shadow(0 0 16px rgba(139,105,20,0.6)); }
 }
 @keyframes highlightPulse {
   0%, 100% { opacity: 0.6; }

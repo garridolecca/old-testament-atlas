@@ -60,7 +60,7 @@ async function initMap() {
      SimpleMarkerSymbol, SimpleLineSymbol, TextSymbol, WebTileLayer] = modules;
 
     const basemap = new WebTileLayer({
-      urlTemplate: "https://{subDomain}.basemaps.cartocdn.com/dark_all/{level}/{col}/{row}.png",
+      urlTemplate: "https://{subDomain}.basemaps.cartocdn.com/light_all/{level}/{col}/{row}.png",
       subDomains: ["a","b","c","d"],
       copyright: "CartoDB"
     });
@@ -258,7 +258,7 @@ function drawCities() {
         symbol: new SimpleMarkerSymbol({
           color: [...bookColor, 0.9],
           size: size,
-          outline: { color: [255, 255, 255, 0.8], width: 1.5 },
+          outline: { color: [255, 255, 255, 0.9], width: 2 },
           style: "circle"
         }),
         attributes: { cityId: city.id, name: city.biblicalName, significance: city.significance }
@@ -269,9 +269,9 @@ function drawCities() {
         geometry: new Point({ longitude: city.lng, latitude: city.lat, spatialReference: { wkid: 4326 } }),
         symbol: new TextSymbol({
           text: String(order),
-          color: [26, 17, 25, 1],
+          color: [255, 255, 255, 1],
           font: { size: 9, family: "Inter, sans-serif", weight: "bold" },
-          haloColor: [255, 255, 255, 0],
+          haloColor: [0, 0, 0, 0],
           haloSize: 0,
           yoffset: 0
         }),
@@ -284,7 +284,7 @@ function drawCities() {
         symbol: new SimpleMarkerSymbol({
           color: [...bookColor, markerAlpha],
           size: size,
-          outline: { color: [255, 255, 255, overview ? 0.2 : 0.6], width: overview ? 0.5 : 1 },
+          outline: { color: [255, 255, 255, overview ? 0.4 : 0.8], width: overview ? 0.5 : 1.5 },
           style: "circle"
         }),
         attributes: { cityId: city.id, name: city.biblicalName, significance: city.significance }
@@ -333,9 +333,9 @@ function drawCities() {
           geometry: new Point({ longitude: city.lng, latitude: city.lat, spatialReference: { wkid: 4326 } }),
           symbol: new TextSymbol({
             text: city.biblicalName,
-            color: [245, 230, 200, labelAlpha],
+            color: [44, 36, 24, labelAlpha],
             font: { size: fontSize, family: "Cinzel, serif", weight: "normal" },
-            haloColor: [26, 17, 25, 0.8],
+            haloColor: [255, 255, 255, 0.85],
             haloSize: 2,
             yoffset: yOff
           })
@@ -400,14 +400,14 @@ function drawGeoLabels() {
         geometry: new Point({ longitude: lbl.lng, latitude: lbl.lat, spatialReference: { wkid: 4326 } }),
         symbol: new TextSymbol({
           text: lbl.text,
-          color: [255, 255, 255, lbl.style === "italic" ? 0.25 : 0.3],
+          color: [80, 70, 60, lbl.style === "italic" ? 0.35 : 0.3],
           font: {
             size: lbl.size,
             family: lbl.style === "italic" ? "Inter, sans-serif" : "Cinzel, serif",
             weight: "normal",
             style: lbl.style
           },
-          haloColor: [0, 0, 0, 0.2],
+          haloColor: [255, 255, 255, 0.4],
           haloSize: 1
         })
       }));
@@ -502,9 +502,9 @@ function drawHighlight(city) {
   highlightLayer.add(new Graphic({
     geometry: new Point({ longitude: city.lng, latitude: city.lat, spatialReference: { wkid: 4326 } }),
     symbol: new SimpleMarkerSymbol({
-      color: [201, 168, 76, 0.2],
-      size: 28,
-      outline: { color: [201, 168, 76, 0.9], width: 3 },
+      color: [139, 105, 20, 0.15],
+      size: 30,
+      outline: { color: [139, 105, 20, 0.8], width: 3 },
       style: "circle"
     })
   }));
