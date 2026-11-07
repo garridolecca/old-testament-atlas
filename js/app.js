@@ -59,13 +59,18 @@ async function initMap() {
     [Map, MapView, GraphicsLayer, Graphic, Point, Polyline,
      SimpleMarkerSymbol, SimpleLineSymbol, TextSymbol, WebTileLayer] = modules;
 
+    // Esri World Light Gray Canvas tiles: public, no API key required
+    // (CARTO's basemaps.cartocdn.com tiles now require an API key).
+    const esriTiles = "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/";
     const basemap = new WebTileLayer({
-      urlTemplate: "https://{subDomain}.basemaps.cartocdn.com/light_all/{level}/{col}/{row}.png",
-      subDomains: ["a","b","c","d"],
-      copyright: "CartoDB"
+      urlTemplate: esriTiles + "World_Light_Gray_Base/MapServer/tile/{level}/{row}/{col}",
+      copyright: "Esri, HERE, Garmin, © OpenStreetMap contributors"
+    });
+    const basemapLabels = new WebTileLayer({
+      urlTemplate: esriTiles + "World_Light_Gray_Reference/MapServer/tile/{level}/{row}/{col}"
     });
 
-    const map = new Map({ layers: [basemap] });
+    const map = new Map({ layers: [basemap, basemapLabels] });
 
     routesLayer = new GraphicsLayer({ id: "routes-layer" });
     citiesLayer = new GraphicsLayer({ id: "cities-layer" });

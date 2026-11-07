@@ -18,7 +18,7 @@ An interactive web application that brings the geography of the Old Testament to
 ## Tech Stack
 
 - **ArcGIS Maps SDK for JavaScript 4.31** — Map rendering and geospatial visualization
-- **CartoDB Positron Dark** — Dark basemap tiles (no API key required)
+- **Esri World Light Gray Canvas** — Basemap tiles (no API key required)
 - **Vanilla JavaScript (ES Modules)** — Zero dependencies, no build step
 - **CSS Custom Properties** — Dynamic theming with 39 unique book colors
 - **Google Fonts** — Cinzel (display) + Inter (body) for a biblical manuscript aesthetic
@@ -76,4 +76,4 @@ old-testament-atlas/
 
 Inspired by [Paul's Journeys](https://github.com/garridolecca/pauls-journeys) interactive map application.
 
-Built with [ArcGIS Maps SDK](https://developers.arcgis.com/javascript/) and [CartoDB](https://carto.com/) basemap tiles.
+Built with [ArcGIS Maps SDK](https://developers.arcgis.com/javascript/) and Esri World Light Gray Canvas basemap tiles.
